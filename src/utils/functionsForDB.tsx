@@ -8,8 +8,37 @@ import { setBanners, setCategory } from "../rtk/category&banners";
 // import { useState } from "react";
 // import { useDispatch } from "react-redux";
 // import { setCart } from "../rtk/cartSlice2";
+import { useQuery, gql } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+
 
 const baseUrl = import.meta.env.VITE_SERVER_API || "https://store-back-3.onrender.com"
+
+// const GET_ALL_PRODUCTS = gql`
+//   query {
+//     getAllProducts {
+//       title
+//       price
+//       description
+//       category
+//       attribute
+//       quantity
+//     }
+//   }
+// `;
+
+
+// export function ConnectToData() {
+//   const dispatch = useAppDispatch();
+//   const { error, data } = useQuery(GET_ALL_PRODUCTS);
+
+//   useEffect(() => {
+//     if (data) dispatch(setProducts(data.getAllProducts))
+//     if (error) throw error
+//   }, [data, error])
+// }
+
 
 export function ConnectToData() {
   const dispatch = useAppDispatch();
@@ -38,7 +67,7 @@ export const ConnectBanners = async () => {
 
   try {
     const resp = await axios.get(`https://serverbanners.onrender.com/banners`);
-    if(resp.data){
+    if (resp.data) {
       const { data } = resp;
       dispatch(setBanners(data));
     }
@@ -47,18 +76,57 @@ export const ConnectBanners = async () => {
   }
 };
 
-
-export const ConnectCategory = async () => {
-  const dispatch = useAppDispatch();
-  
-  try {
-    const resp = await axios.get(`${baseUrl}/categories`);
-    const { data } = resp;
-    dispatch(setCategory(data))
-  } catch (error) {
-    console.log(error);
+const GET_CATEGORY = gql`
+  query {
+    getCategory {
+      name
+      image
+      click
+    }
   }
+`;
+
+
+const httpLink = createHttpLink({
+  uri: `${baseUrl}/graphql`
+});
+
+export const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+});
+
+
+export function ConnectCategory() {
+  const dispatch = useAppDispatch();
+  const { error, data } = useQuery(GET_CATEGORY);
+
+  useEffect(() => {
+    if (data) dispatch(setCategory(data.getCategory))
+    if (error) throw error
+  }, [data, error])
 }
+
+
+// export function ConnectCategoryWrapper() {
+//   return (
+//     <ApolloProvider client={client}>
+//       <ConnectCategory />
+//     </ApolloProvider>
+//   );
+// }
+
+// export const ConnectCategory = async () => {
+//   const dispatch = useAppDispatch();
+
+//   try {
+//     const resp = await axios.get(`${baseUrl}/categories`);
+//     const { data } = resp;
+//     dispatch(setCategory(data))
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 
 
 // export const getCartFromServer = async (userId) => {

@@ -5,7 +5,7 @@ import { setUserNameInCart } from "../rtk/cartSlice";
 
 const AutomaticLogIn = async () => {
   const dispatch = useAppDispatch();
-  const baseURL = import.meta.env.VITE_SERVER_API;
+  const baseURL = import.meta.env.VITE_SERVER_API_OLD;
 
   const email = localStorage.getItem("email");
   const password = localStorage.getItem("password");

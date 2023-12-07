@@ -6,7 +6,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import axios from "axios";
 import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { setOpen as setOpenSignUp } from "../rtk/flagSignUpSlice";
 import { setOpen as setOpenLogIn } from "../rtk/flagLogInSlice";
@@ -15,6 +14,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styleButton } from "../style/login&Signin";
 import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined';
+import { gql, useMutation } from "@apollo/client";
 
 export default function SignIn() {
   const [details, setDetails] = useState({
@@ -39,9 +39,22 @@ export default function SignIn() {
     dispatch(setOpenSignUp(false));
   };
 
-  const baseURL = import.meta.env.VITE_SERVER_API;
+  const REGISTER_USER = gql`
+    mutation Register($userData: UserRegisterInput!) {
+      register(user: $userData) {
+        firstName
+        username
+        lastName
+        email
+        password
+      }
+    }
+`;
 
-  const handleRegistration = async () => {
+
+  const [register] = useMutation(REGISTER_USER)
+
+  const handleRegistration = () => {
     const { email, password, confirmPassword, userName, firstName, lastName } = details;
     if (
       password === confirmPassword &&
@@ -51,51 +64,48 @@ export default function SignIn() {
       firstName.length > 0 &&
       lastName.length > 0
     ) {
-      try {
-        const userData = {
-          firstName,
-          lastName,
-          username: userName,
-          email,
-          password,
-          confirmPassword: confirmPassword,
-        };
-        const response = await axios.post(
-          `${baseURL}/users/register`,
-          userData
-        );
-        if (response.data) {
-          setDetails({ email: "", password: "", confirmPassword: "", userName: "", firstName: "", lastName: ""})
-          dispatch(setOpenSignUp(false));
-          dispatch(setOpenLogIn(true));
-        }
-      } catch (error) {
-        console.error("Error during registration:", error);
-      }
+      const userData = {
+        firstName,
+        lastName,
+        username: userName,
+        email,
+        password,
+        confirmPassword: confirmPassword,
+      };
+      register({ variables: { userData } })
+        .then(({ data }) => {
+          if (data) {
+            setDetails({ email: "", password: "", confirmPassword: "", userName: "", firstName: "", lastName: "" })
+            dispatch(setOpenSignUp(false));
+            dispatch(setOpenLogIn(true));
+          }
+        }).catch((error) => {
+          console.error(error);
+        })
     }
   };
 
   return (
     <React.Fragment>
       <IconButton
-          size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
-          color="inherit"
-          onClick={handleClickOpen}
-        >
-          <HowToRegOutlinedIcon/>
-        </IconButton>
+        size="large"
+        aria-label="account of current user"
+        aria-controls="primary-search-account-menu"
+        aria-haspopup="true"
+        color="inherit"
+        onClick={handleClickOpen}
+      >
+        <HowToRegOutlinedIcon />
+      </IconButton>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle style={{textAlign: 'center'}}>registration</DialogTitle>
+        <DialogTitle style={{ textAlign: 'center' }}>registration</DialogTitle>
         <DialogContent>
-          <DialogContentText style={{textAlign: 'center'}}>
+          <DialogContentText style={{ textAlign: 'center' }}>
             To register please enter email and password.
           </DialogContentText>
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, firstName: e.target.value,
                 }
@@ -116,7 +126,7 @@ export default function SignIn() {
           />
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, lastName: e.target.value,
                 }
@@ -136,7 +146,7 @@ export default function SignIn() {
           />
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, userName: e.target.value,
                 }
@@ -156,7 +166,7 @@ export default function SignIn() {
           />
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, email: e.target.value,
                 }
@@ -174,7 +184,7 @@ export default function SignIn() {
           />
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, password: e.target.value,
                 }
@@ -203,7 +213,7 @@ export default function SignIn() {
           />
           <TextField
             onChange={(e) => {
-              setDetails((prev)=> {
+              setDetails((prev) => {
                 return {
                   ...prev, confirmPassword: e.target.value,
                 }

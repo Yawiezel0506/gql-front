@@ -6,7 +6,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import axios from "axios";
 import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { setOpen as setOpenSignUp } from "../rtk/flagSignUpSlice";
 import { setOpen as setOpenLogIn } from "../rtk/flagLogInSlice";
@@ -19,6 +18,7 @@ import { styleButton } from "../style/login&Signin";
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { gql, useMutation } from "@apollo/client";
 
 const LogIn = () => {
   const [email, setEmail] = useState("");
@@ -58,44 +58,75 @@ const LogIn = () => {
     })
   }
 
-  const baseURL = import.meta.env.VITE_SERVER_API;
+  const REGISTER_USER = gql`
+    mutation LogIn($userData: UserLogin) {
+      logIn(user: $userData){
+        email
+        firstName
+        username
+        lastName
+        password
+        # signup_time
+      }
+    }
+`;
 
-  const handleLogIn = async () => {
+
+  const [login] = useMutation(REGISTER_USER)
+
+  const handleLogIn = () => {
     if (validateEmail(email) && validatePassword(password)) {
-      try {
-        const userData = {
-          email: email,
-          password: password,
-        };
-        const response = await axios.post(
-          `${baseURL}/users/login`,
-          userData
-        );
-        if (response.data) {
-          const userName = response.data.user;
+      const userData = {
+        email: email.toString(),
+        password: password.toString(),
+      };
+      login({ variables: { userData } }).then(({ data }) => {
+        if (data) {
+          const userName = data;
+          localStorage.setItem('email', email)
+          localStorage.setItem('password', password)
           setEmail("");
           setPassword("");
           dispatch(setUserName(userName));
           dispatch(
             setUserNameInCart(`${userName.firstName} ${userName.lastName}`)
           );
-          localStorage.setItem('email', email)
-          localStorage.setItem('password', password)
           notify()
         }
-      } catch (error) {
-        console.error("Error during registration:", error);
+      }).catch((error) => {
+        console.error(error);
         dispatch(setOpenSignUp(true));
+      })
+      //     const response = await axios.post(
+      //       `${baseURL}/users/login`,
+      //       userData
+      //     );
+      //     if (response.data) {
+      //       const userName = response.data.user;
+      //       setEmail("");
+      //       setPassword("");
+      //       dispatch(setUserName(userName));
+      //       dispatch(
+      //         setUserNameInCart(`${userName.firstName} ${userName.lastName}`)
+      //       );
+      //       localStorage.setItem('email', email)
+      //       localStorage.setItem('password', password)
+      //       notify()
+      //     }
+      //   } catch (error) {
+      //     console.error("Error during registration:", error);
+      //     dispatch(setOpenSignUp(true));
+      //   }
+      //   dispatch(setOpenLogIn(false));
+      // }
+      if (!validatePassword(password)) {
+        setOpenAlertPassword(true);
       }
-      dispatch(setOpenLogIn(false));
-    }
-    if (!validatePassword(password)) {
-      setOpenAlertPassword(true);
-    }
-    if (!validateEmail(email)) {
-      setOpenAlertEmail(true);
-    }
-  };
+      if (!validateEmail(email)) {
+        setOpenAlertEmail(true);
+      }
+    };
+  }
 
   const handleRegistration = () => {
     dispatch(setOpenSignUp(true));
@@ -108,19 +139,19 @@ const LogIn = () => {
         Log IN
       </Button> */}
       <IconButton
-          size="large"
-          aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
-          color="inherit"
-          onClick={handleClickOpen}
-        >
-          <VpnKeyOutlinedIcon/>
-        </IconButton>
+        size="large"
+        aria-label="account of current user"
+        aria-controls="primary-search-account-menu"
+        aria-haspopup="true"
+        color="inherit"
+        onClick={handleClickOpen}
+      >
+        <VpnKeyOutlinedIcon />
+      </IconButton>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle style={{textAlign: 'center'}}>Log in</DialogTitle>
+        <DialogTitle style={{ textAlign: 'center' }}>Log in</DialogTitle>
         <DialogContent>
-          <DialogContentText style={{textAlign: 'center'}}>
+          <DialogContentText style={{ textAlign: 'center' }}>
             To log in, please enter your email and password.
           </DialogContentText>
           <TextField
