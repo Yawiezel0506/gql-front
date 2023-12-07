@@ -39,6 +39,8 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     []
   );
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
+
+  const [stam, setStam] = useState<number>(0);
   const navigate = useNavigate();
 
   const dispatch = useAppDispatch();
@@ -52,63 +54,67 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     (state) => state.cart.products
   );
 
-  if (flag) {
+  // if (flag) {
 
-    const GET_PRODUCTS_FROM_CART = gql`
-    query Cart($cartId: String!) {
-      cart(id: $cartId) {
-        products {
-          name: productId
-          quantity
-          price
-          description
-        }
-      } 
-    }
-  `;
-
-    const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
-      variables: { cartId: userId.toString() },
-    });
-
-    useEffect(() => {
-      if (dataCart) setProductForCart(dataCart.cart.products); console.log('dataCart', dataCart);
-      if (errorCart) console.error(errorCart);
-    }, [dataCart, errorCart])
-
-  }
-  // function useCartProducts(userId: string) {
   //   const GET_PRODUCTS_FROM_CART = gql`
-  //     query Cart($cartId: String!) {
-  //       cart(id: $cartId) {
-  //         products {
-  //           name: productId
-  //           quantity
-  //           price
-  //           description
-  //         }
+  //   query Cart($cartId: String!) {
+  //     cart(id: $cartId) {
+  //       products {
+  //         name: productId
+  //         quantity
+  //         price
+  //         description
   //       }
-  //     }
-  //   `;
+  //     } 
+  //   }
+  // `;
 
   //   const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
   //     variables: { cartId: userId.toString() },
   //   });
 
-  //   const [productsForCart, setProductForCart] = useState([]);
-
   //   useEffect(() => {
-  //     if (dataCart) {
-  //       setProductForCart(dataCart.cart.products);
-  //       console.log('dataCart', dataCart);
-  //     }
+  //     if (dataCart) setProductForCart(dataCart.cart.products); console.log('dataCart', dataCart);
   //     if (errorCart) console.error(errorCart);
-  //   }, [dataCart, errorCart]);
+  //   }, [dataCart, errorCart])
 
-  //   return productsForCart;
   // }
+  function useCartProducts(userId: string) {
+    const GET_PRODUCTS_FROM_CART = gql`
+      query Cart($cartId: String!) {
+        cart(id: $cartId) {
+          products {
+            name: productId
+            quantity
+            price
+            description
+          }
+        }
+      }
+    `;
 
-  // useCartProducts(userId);
+    const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
+      variables: { cartId: userId.toString() },
+    });
+
+    const [productsForCart, setProductForCart] = useState([]);
+
+    useEffect(() => {
+      if (dataCart) {
+        setProductForCart(dataCart.cart.products);
+        console.log('dataCart', dataCart);
+      }
+      if (errorCart) console.error(errorCart);
+    }, [dataCart, errorCart]);
+
+    return productsForCart;
+  }
+
+  useEffect(()=>{
+    const x = useCartProducts(userId);
+    console.log(x);
+    
+  },[stam])
 
   
   const ADD_QUANTITY = gql`
