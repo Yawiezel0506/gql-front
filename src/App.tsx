@@ -11,16 +11,30 @@ import { ThemeProvider } from "@mui/material";
 import { ConnectToData, ConnectBanners, ConnectCategory } from "./utils/functionsForDB";
 import NotFound from "./pages/NotFound";
 import automaticLogIn from "./utils/automaticLogIn";
+import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
+
+const baseUrl = import.meta.env.VITE_SERVER_API
+
+const httpLink = createHttpLink({
+  uri: `${baseUrl}/graphql`
+});
+
+export const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+});
+
 
 function App() {
-  ConnectToData();
+  // ConnectToData();
   automaticLogIn();
-  ConnectCategory()
+  // ConnectCategory()
   ConnectBanners()
   const theme = useMemo(() => createTheme(themeSettings), []);
   return (
     <>
       <BrowserRouter>
+      <ApolloProvider client={client}>
         <ThemeProvider theme={theme}>
           <Routes>
             <Route path="*" element={<NotFound />} />
@@ -32,6 +46,7 @@ function App() {
             </Route>
           </Routes>
         </ThemeProvider>
+        </ApolloProvider>
       </BrowserRouter>
     </>
   );

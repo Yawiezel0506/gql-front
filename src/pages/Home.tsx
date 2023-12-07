@@ -15,6 +15,9 @@ import { useNavigate } from "react-router-dom";
 import HomeSkeleton from "../components/HomeSkeleton";
 import { cardCategory, pHello } from "../style/home";
 import { bannerCard, class_scrolling_container, hide_scrollbar } from "../style/banners";
+import { setCategory } from "../rtk/category&banners";
+import { gql, useQuery } from "@apollo/client";
+import { setProducts } from "../rtk/productsSlice";
 
 
 const Home = () => {
@@ -27,12 +30,57 @@ const Home = () => {
   const categoriesFromRTK: Category[] = useAppSelector((state) => state.categoryAndBanners.category)
   const bannersFromRTK: Banner[] = useAppSelector((state) => state.categoryAndBanners.banners)
 
+  const GET_CATEGORY = gql`
+    query ExampleQuery {
+      getCategories {
+        name
+        clicks
+        image
+      }
+    }
+`;
+
+  const { error: errorCategories, data: dataCategories } = useQuery(GET_CATEGORY);
+
+  useEffect(() => {
+    if (dataCategories) dispatch(setCategory(dataCategories.getCategories))
+    if (errorCategories) throw errorCategories
+  }, [dataCategories, errorCategories])
+
+
+
+  const GET_ALL_PRODUCTS = gql`
+    query GetAllProducts {
+      getAllProducts {
+        title
+        quantity
+        price
+        id
+        description
+        clickCount
+        category
+        attributes {
+          key
+          value
+        }
+      }
+    }
+  `;
+
+  const { error: errorProducts, data: dataProducts } = useQuery(GET_ALL_PRODUCTS);
+
+  useEffect(() => {
+    if (dataProducts) dispatch(setProducts(dataProducts.getAllProducts))
+    if (errorProducts) throw errorProducts
+  }, [dataProducts, errorProducts])
+
+
   useEffect(() => {
     setBanners(bannersFromRTK)
   }, [bannersFromRTK])
 
   useEffect(() => {
-    if (categoriesFromRTK.length) {
+    if (categoriesFromRTK && categoriesFromRTK.length) {
       setCategories(categoriesFromRTK)
       setLoading(false)
     }
@@ -51,6 +99,8 @@ const Home = () => {
   };
 
   const userName = useAppSelector((state) => state.userName.userName)
+console.log(localStorage.getItem('email'));
+console.log(localStorage.getItem('password'));
 
   return (
     <>

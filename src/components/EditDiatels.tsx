@@ -1,18 +1,18 @@
 import { Alert, Button, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from "@mui/material";
 import { FC, useEffect, useState } from "react";
 import { styleButton } from "../style/login&Signin";
-import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import { setUserName } from "../rtk/userNameSlice";
 import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { Edit } from '../interfaces/users'
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import { gql, useMutation } from "@apollo/client";
 
 interface Props {
     close: () => void
 }
 
-const EditDetails:FC<Props> = ({close}) => {
+const EditDetails: FC<Props> = ({ close }) => {
     const [openAlertEmail, setOpenAlertEmail] = useState(false);
 
     const [open, setOpen] = useState(false);
@@ -22,6 +22,7 @@ const EditDetails:FC<Props> = ({close}) => {
         username: '',
         email: '',
         password: '',
+        confirmPassword: ''
     })
 
 
@@ -36,8 +37,6 @@ const EditDetails:FC<Props> = ({close}) => {
         setDetails((prev) => ({ ...prev, email: userFromRTK.email }))
     }, [userFromRTK])
 
-    const baseURL = import.meta.env.VITE_SERVER_API;
-
     const validateEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -50,6 +49,20 @@ const EditDetails:FC<Props> = ({close}) => {
         })
     }
 
+    const REGISTER_USER = gql`
+        mutation Edit($oldUser: UserRegisterInput!, $newUser: UserRegisterInput!) {
+            edit(oldUser: $oldUser, newUser: $newUser) {
+                firstName
+                lastName
+                username
+                email
+                password
+            }
+        }
+    `;
+
+    const [login] = useMutation(REGISTER_USER)
+
     const handelSubmit = async () => {
         if (details.email && validateEmail(details.email)) {
             const oldUser = {
@@ -57,19 +70,12 @@ const EditDetails:FC<Props> = ({close}) => {
                 lastName: userFromRTK.lastName,
                 username: userFromRTK.userName,
                 email: userFromRTK.email,
-                password: ''
+                password: '',
+                confirmPassword: ''
             }
-            const editUser = [
-                oldUser,
-                details
-            ]
-            try {
-                const response = await axios.post(
-                    `${baseURL}/users/edit`,
-                    editUser
-                );
-                if (response.data) {
-                    const userName = response.data.user;
+            login({ variables: { oldUser, newUser: details } }).then(({ data }) => {
+                if (data) {
+                    const userName = data.edit;                   
                     Object.assign(userName, { _id: userFromRTK.userId })
                     dispatch(setUserName(userName));
                     localStorage.setItem('email', details.email)
@@ -77,9 +83,9 @@ const EditDetails:FC<Props> = ({close}) => {
                     setOpen(false)
                     close()
                 }
-            } catch (error) {
-                console.error("Error during registration:", error);
-            }
+            }).catch((error) => {
+                console.error(error);
+            })
         }
         if (details.email && !validateEmail(details.email)) {
             setOpenAlertEmail(true);
@@ -134,7 +140,7 @@ const EditDetails:FC<Props> = ({close}) => {
                         required
                         error={!details.username}
                         helperText={
-                            !details.username  ? "This is a required field." : ""
+                            !details.username ? "This is a required field." : ""
                         }
                     />
                     <TextField
