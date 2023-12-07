@@ -125,7 +125,7 @@ const LogIn = () => {
       if (!validateEmail(email)) {
         setOpenAlertEmail(true);
       }
-    };
+    }
   }
 
   const handleRegistration = () => {

@@ -45,7 +45,7 @@ const Home = () => {
   useEffect(() => {
     if (dataCategories) dispatch(setCategory(dataCategories.getCategories))
     if (errorCategories) throw errorCategories
-  }, [dataCategories, errorCategories])
+  }, [dataCategories, dispatch, errorCategories])
 
 
 
@@ -72,7 +72,7 @@ const Home = () => {
   useEffect(() => {
     if (dataProducts) dispatch(setProducts(dataProducts.getAllProducts))
     if (errorProducts) throw errorProducts
-  }, [dataProducts, errorProducts])
+  }, [dataProducts, dispatch, errorProducts])
 
 
   useEffect(() => {
@@ -91,17 +91,14 @@ const Home = () => {
   }, [dispatch]);
 
   const clickToCard = (cat: string) => {
-    navigate(`/store/products/${cat}`);
+    navigate(`/products/${cat}`);
   };
 
   const handleClick = (productId: string) => {
-    navigate(`/store/product/${productId}`);
+    navigate(`/product/${productId}`);
   };
 
   const userName = useAppSelector((state) => state.userName.userName)
-console.log(localStorage.getItem('email'));
-console.log(localStorage.getItem('password'));
-
   return (
     <>
       {userName && <Typography variant="h1" align="center" gutterBottom style={pHello}>
@@ -136,13 +133,13 @@ console.log(localStorage.getItem('password'));
         </>
       )}
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2} key={Date.now() * Math.random()}> 
         {loading ? (
           <HomeSkeleton />
         ) : (
           Array.isArray(categories) &&
           categories.map((cat: Category) => (
-            <Grid item xs={12} sm={6} md={4} key={cat._id}>
+            <Grid item xs={12} sm={6} md={4} key={Date.now() * Math.random()}>
               <Card sx={cardCategory}>
                 <CardActionArea sx={{ flexGrow: 1 }}>
                   <CardContent>

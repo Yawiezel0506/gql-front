@@ -213,7 +213,7 @@ export default function PrimarySearchAppBar() {
         </IconButton>
         <p>Cart</p>
       </MenuItem>
-      <MenuItem onClick={() => navigate("/store")}>
+      <MenuItem onClick={() => navigate("/")}>
         <IconButton
           size="large"
           aria-label="show 17 new notifications"
@@ -265,10 +265,9 @@ export default function PrimarySearchAppBar() {
     }
   };
 
-  const handleResultSelect = (result: Result) => {
-    console.log(result);
-    
-  };
+  // const handleResultSelect = (result: Result) => {
+  //   console.log(result);
+  // };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -278,7 +277,7 @@ export default function PrimarySearchAppBar() {
         sx={{ background: "rgb(35,47,62)", color: "rgb(255,255,255)" }}
       >
         <Toolbar>
-          <div onClick={() => navigate("/store")}>
+          <div onClick={() => navigate("/")}>
             <Typography
               variant="h2"
               noWrap
@@ -338,7 +337,7 @@ export default function PrimarySearchAppBar() {
             <IconButton
               size="large"
               color="inherit"
-              onClick={() => navigate("/store")}
+              onClick={() => navigate("/")}
             >
               <CottageOutlinedIcon />
             </IconButton>

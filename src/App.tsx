@@ -8,10 +8,11 @@ import { themeSettings } from "./palette/theme";
 import { createTheme } from "@mui/material/styles";
 import { useMemo } from "react";
 import { ThemeProvider } from "@mui/material";
-import { ConnectToData, ConnectBanners, ConnectCategory } from "./utils/functionsForDB";
+import { ConnectBanners } from "./utils/functionsForDB";
 import NotFound from "./pages/NotFound";
 import automaticLogIn from "./utils/automaticLogIn";
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
+import Charts from "./pages/Charts";
 
 const baseUrl = import.meta.env.VITE_SERVER_API
 
@@ -26,9 +27,7 @@ export const client = new ApolloClient({
 
 
 function App() {
-  // ConnectToData();
   automaticLogIn();
-  // ConnectCategory()
   ConnectBanners()
   const theme = useMemo(() => createTheme(themeSettings), []);
   return (
@@ -40,9 +39,10 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route element={<Layout />}>
               <Route path="*" element={<NotFound />} />
-              <Route path="/store" element={<Home />} />
-              <Route path="/store/products/:category" element={<Products />} />
-              <Route path="/store/product/:id" element={<Product />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/charts" element={<Charts/>}/>
+              <Route path="/products/:category" element={<Products />} />
+              <Route path="/product/:id" element={<Product />} />
             </Route>
           </Routes>
         </ThemeProvider>

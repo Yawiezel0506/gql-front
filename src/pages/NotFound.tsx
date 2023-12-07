@@ -16,7 +16,7 @@ export default function NotFound() {
             <Typography variant="h6">
               The page you’re looking for doesn’t exist.
             </Typography>
-            <Button variant="contained" onClick={() => navigate("/store")}>
+            <Button variant="contained" onClick={() => navigate("/")}>
               Go To Home
             </Button>
           </Grid>
