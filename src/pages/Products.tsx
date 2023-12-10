@@ -39,6 +39,7 @@ import {
   typographyH3PriceStyle,
   typographyH3Style,
 } from "../style/products";
+import { gql, useMutation } from "@apollo/client";
 
 type State = Record<string, boolean>;
 type Action = { type: "toggle"; name: string | number };
@@ -71,6 +72,25 @@ const Products = () => {
   const dispatch = useAppDispatch();
   const { palette } = useTheme();
 
+  const flag = useAppSelector((state) => state.userName.flag)
+  const user_id = useAppSelector((state) => state.userName.userId)
+
+  const ADD_TO_CART = gql`
+      mutation AddToCart($input: AddToCartInput) {
+        addToCart(input: $input) {
+          userId
+          products {
+            productId
+            quantity
+            description
+            price
+          }
+        }
+      }
+  `;
+
+  const [addToCartInDB] = useMutation(ADD_TO_CART)
+
   useEffect(() => {
     connectToData(category, setLoading, setProducts);
   }, [category]);
@@ -84,7 +104,7 @@ const Products = () => {
 
   useEffect(() => {
     dispatch(render());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClick = (productId: string) => {
@@ -115,15 +135,30 @@ const Products = () => {
   };
 
   const addToCart = (product: Product) => {
-    dispatch(
-      addProductToCart({
-        name: product.id,
-        quantity: 1,
-        price: product.price,
-        description: product.description,
+    if (flag) {
+      addToCartInDB({
+        variables: {
+          input: {
+            userId: user_id.toString(), products: [{
+              productId: product.id.toString(),
+              price: product.price,
+              quantity: 1,
+              description: product.description
+            }]
+          }
+        }
       })
-    );
-  };
+    } else {
+      dispatch(
+        addProductToCart({
+          name: product.id,
+          quantity: 1,
+          price: product.price,
+          description: product.description,
+        })
+      );
+    };
+  }
   const incrementQuantity = (product: Product) => {
     dispatch(increment(product.id));
   };
@@ -232,7 +267,7 @@ const Products = () => {
                     <Typography variant="h3" sx={typographyH3PriceStyle}>
                       ${product.price}
                     </Typography>
-                    {!addedToCart && <IconButton onClick={() => addToCart(product)} sx={buttonAddToCart} > <AddShoppingCartIcon sx={buttonAddToCart}  /></IconButton>}
+                    {!addedToCart && <IconButton onClick={() => addToCart(product)} sx={buttonAddToCart} > <AddShoppingCartIcon sx={buttonAddToCart} /></IconButton>}
                     {addedToCart &&
                       <Box>
                         <IconButton sx={buttonAddToCart} onClick={() => incrementQuantity(product)}>

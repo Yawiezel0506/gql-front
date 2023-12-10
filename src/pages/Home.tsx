@@ -43,7 +43,7 @@ const Home = () => {
   const { error: errorCategories, data: dataCategories } = useQuery(GET_CATEGORY);
 
   useEffect(() => {
-    if (dataCategories) dispatch(setCategory(dataCategories.getCategories)); console.log(dataCategories);
+    if (dataCategories) dispatch(setCategory(dataCategories.getCategories))
     if (errorCategories) throw errorCategories
   }, [dataCategories, dispatch, errorCategories])
 
@@ -71,8 +71,7 @@ const Home = () => {
   const { error: errorProducts, data: dataProducts } = useQuery(GET_ALL_PRODUCTS);
 
   useEffect(() => {
-    if (dataProducts) dispatch(setProducts(dataProducts.getAllProducts)); console.log(dataProducts);
-    
+    if (dataProducts) dispatch(setProducts(dataProducts.getAllProducts))
     if (errorProducts) throw errorProducts
   }, [dataProducts, dispatch, errorProducts])
 
@@ -101,9 +100,6 @@ const Home = () => {
   };
 
   const userName = useAppSelector((state) => state.userName.userName)
-  console.log(localStorage.getItem('email'));
-  console.log(localStorage.getItem('password'));
-  
   return (
     <>
       {userName && <Typography variant="h1" align="center" gutterBottom style={pHello}>

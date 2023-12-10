@@ -88,25 +88,6 @@ const LogIn = () => {
   const [addToCart] = useMutation(ADD_TO_CART)
   const [login] = useMutation(REGISTER_USER)
 
-
-  const postCartToDB = (userName: any) => {
-    const lsCart = localStorage.getItem('cart')
-    const cart = lsCart ? JSON.parse(lsCart) : []
-    if (!cart || cart.length === 0) {
-      console.log('The cart is empty.');
-      return; // או תעשה מזהה טיפול נוסף כפי שמתאים לך
-    }
-    const newCart = cart.map((item: any) => {
-      return {
-        productId: item.name.toString(),
-        price: item.price,
-        quantity: item.quantity,
-        description: item.description
-      }
-    })
-    addToCart({ variables: { input: { userId: userName.logIn._id.toString(), products: newCart } } })
-  }
-
   const handleLogIn = () => {
     if (validateEmail(email) && validatePassword(password)) {
       const userData = {
@@ -125,12 +106,24 @@ const LogIn = () => {
             setUserNameInCart(userName.logIn._id)
           );
           notify()
-          postCartToDB(userName)
+          const lsCart = localStorage.getItem('cart')
+          const cart = lsCart ? JSON.parse(lsCart) : []
+          const newCart = cart.map((item: any) => {
+            return {
+              productId: item.name.toString(),
+              price: item.price,
+              quantity: item.quantity,
+              description: item.description
+            }
+          })
+          addToCart({ variables: { input: { userId: userName.logIn._id.toString(), products: newCart } } }).then(({data}) =>{
+            if(data) localStorage.removeItem('cart')
+          } )
         }
-        }).catch((error) => {
-          console.error(error);
-          dispatch(setOpenSignUp(true));
-        })
+      }).catch((error) => {
+        console.error(error);
+        dispatch(setOpenSignUp(true));
+      })
 
       if (!validatePassword(password)) {
         setOpenAlertPassword(true);

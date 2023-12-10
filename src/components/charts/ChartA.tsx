@@ -1,22 +1,35 @@
 import { BarChart } from "@mui/x-charts/BarChart";
-import axios from "axios";
+
 import { useEffect, useState } from "react";
 import { Theme, useMediaQuery } from "@mui/material";
 import { UserRegister } from "../../interfaces/users";
-
-const baseUrl =
-  import.meta.env.VITE_SERVER_API || "https://store-back-3.onrender.com";
+import { gql, useQuery } from "@apollo/client";
 
 const initialData = [
   3, 4, 1, 6, 5, 8, 4, 2, 4, 4, 5, 2, 3, 5, 3, 5, 4, 6, 5, 5, 2, 4, 3, 0, 6,
 ];
 
 export default function StackBars() {
-  const isLargeScreen = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg"));
-  const isMediumScreen = useMediaQuery((theme: Theme) => theme.breakpoints.between("md", "lg"));
-  const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
+  const isLargeScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.up("lg")
+  );
+  const isMediumScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.between("md", "lg")
+  );
+  const isSmallScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.down("sm")
+  );
 
   const [data, setData] = useState(initialData);
+
+  const USERS = gql`
+  query GetAllUsers {
+    getAllUsers {
+      _id
+    }
+  }`;
+
+  const {data:usersData} = useQuery(USERS)
 
   const getHourOfDay = (userDate: Date): number => {
     const date = new Date(userDate);
@@ -45,17 +58,17 @@ export default function StackBars() {
   };
 
   useEffect(() => {
-    (async () => {
+    (() => {
       try {
-        const res = await axios.get(`${baseUrl}/users`);
-        const { data } = res;
-        const filterData = extractTimeFromUsers(data);
+        usersData && console.log(usersData.getAllUsers);
+        const filterData = usersData ? extractTimeFromUsers(usersData.getAllUsers): data;
         setData(filterData);
       } catch (error) {
         console.log(error);
       }
     })();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usersData]);
 
   return (
     <BarChart
@@ -70,7 +83,13 @@ export default function StackBars() {
         },
       ]}
       width={
-        isLargeScreen ? 500 : (isMediumScreen ? 400 : (isSmallScreen ? undefined : 300))
+        isLargeScreen
+          ? 500
+          : isMediumScreen
+          ? 400
+          : isSmallScreen
+          ? undefined
+          : 300
       }
       height={350}
     />
