@@ -1,3 +1,4 @@
+import { Theme, useMediaQuery } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 
 const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
@@ -13,10 +14,16 @@ const xLabels = [
 ];
 
 export default function SimpleLineChart() {
+
+  const isLargeScreen = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg"));
+  const isMediumScreen = useMediaQuery((theme: Theme) => theme.breakpoints.between("md", "lg"));
+  const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
   return (
     <LineChart
-      width={500}
-      height={300}
+    width={
+      isLargeScreen ? 500 : (isMediumScreen ? 400 : (isSmallScreen ? undefined : 300))
+    }
+    height={350}
       series={[
         { data: pData, label: 'pv' },
         { data: uData, label: 'uv' },

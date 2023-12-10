@@ -1,4 +1,5 @@
-import { ScatterChart } from '@mui/x-charts/ScatterChart';
+import { useMediaQuery, Theme } from "@mui/material";
+import { ScatterChart } from "@mui/x-charts/ScatterChart";
 
 const data = [
   { x: 100, y: 200, id: 1 },
@@ -10,11 +11,28 @@ const data = [
 ];
 
 export default function SimpleScatterChart() {
+  const isLargeScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.up("lg")
+  );
+  const isMediumScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.between("md", "lg")
+  );
+  const isSmallScreen = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.down("sm")
+  );
   return (
     <ScatterChart
-      width={500}
-      height={300}
-      series={[{ data, label: 'pv', id: 'pvId' }]}
+      width={
+        isLargeScreen
+          ? 500
+          : isMediumScreen
+          ? 400
+          : isSmallScreen
+          ? undefined
+          : 300
+      }
+      height={350}
+      series={[{ data, label: "pv", id: "pvId" }]}
       xAxis={[{ min: 0 }]}
     />
   );
