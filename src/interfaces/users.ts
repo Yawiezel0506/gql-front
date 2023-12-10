@@ -5,6 +5,7 @@ export interface UserRegister {
   username: string;
   email: string;
   password: string;
+  signup_time?: Date;
 }
 
 export interface Edit {

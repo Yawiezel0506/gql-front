@@ -3,13 +3,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { setProducts } from "../rtk/productsSlice";
 import { setBanners, setCategory } from "../rtk/category&banners";
-// import { CartProduct } from "../rtk/cartSlice";
-// import { store } from "../rtk/store";
-// import { useState } from "react";
-// import { useDispatch } from "react-redux";
-// import { setCart } from "../rtk/cartSlice2";
 import { useQuery, gql } from '@apollo/client';
-import { ApolloProvider } from '@apollo/client';
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 
 

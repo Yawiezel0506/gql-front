@@ -36,6 +36,8 @@ const ProductDetails: React.FC = () => {
   const handleExpand = () => {
     setExpanded(!expanded);
   };
+console.log(image);
+console.log(title);
 
   const addToCart = (id: number, price: number, description: string) => {
     dispatch(

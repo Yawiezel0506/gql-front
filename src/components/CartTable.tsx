@@ -11,6 +11,7 @@ import {
   decrement,
   increment,
   removeProduct,
+  setCart,
 } from "../rtk/cartSlice";
 import { Product } from "../interfaces/product";
 import AddIcon from "@mui/icons-material/Add";
@@ -39,11 +40,9 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     []
   );
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
-
-  const [stam, setStam] = useState<number>(0);
   const navigate = useNavigate();
-
   const dispatch = useAppDispatch();
+
   const dataProduct = useAppSelector((state) => state.products.products);
   const setOpenCart = props;
 
@@ -54,69 +53,29 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     (state) => state.cart.products
   );
 
-  // if (flag) {
-
-  //   const GET_PRODUCTS_FROM_CART = gql`
-  //   query Cart($cartId: String!) {
-  //     cart(id: $cartId) {
-  //       products {
-  //         name: productId
-  //         quantity
-  //         price
-  //         description
-  //       }
-  //     } 
-  //   }
-  // `;
-
-  //   const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
-  //     variables: { cartId: userId.toString() },
-  //   });
-
-  //   useEffect(() => {
-  //     if (dataCart) setProductForCart(dataCart.cart.products); console.log('dataCart', dataCart);
-  //     if (errorCart) console.error(errorCart);
-  //   }, [dataCart, errorCart])
-
-  // }
-  function useCartProducts(userId: string) {
-    const GET_PRODUCTS_FROM_CART = gql`
-      query Cart($cartId: String!) {
-        cart(id: $cartId) {
-          products {
-            name: productId
-            quantity
-            price
-            description
-          }
+  const GET_PRODUCTS_FROM_CART = gql`
+    query Cart($cartId: String!) {
+      cart(id: $cartId) {
+        products {
+          name: productId
+          quantity
+          price
+          description
         }
-      }
-    `;
+      } 
+    }
+  `;
 
-    const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
-      variables: { cartId: userId.toString() },
-    });
+  const { error: errorCart, data: dataCart, refetch } = useQuery(GET_PRODUCTS_FROM_CART, {
+    variables: { cartId: userId.toString() },
+  });
+// let p : CartProduct[]= []
+  useEffect(() => {
+    if (dataCart) setProductForCart(dataCart.cart.products); console.log('dataCart', dataCart);
+    if (errorCart) console.error(errorCart);
+  }, [dataCart, errorCart])
 
-    const [productsForCart, setProductForCart] = useState([]);
 
-    useEffect(() => {
-      if (dataCart) {
-        setProductForCart(dataCart.cart.products);
-        console.log('dataCart', dataCart);
-      }
-      if (errorCart) console.error(errorCart);
-    }, [dataCart, errorCart]);
-
-    return productsForCart;
-  }
-
-  useEffect(()=>{
-    const x = useCartProducts(userId);
-    console.log(x);
-    
-  },[stam])
-
-  
   const ADD_QUANTITY = gql`
     mutation UpdateQuantity($input: UpdateQuantityInput) {
       updateQuantity(input: $input) {
@@ -130,50 +89,81 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     }
   `;
 
-
   const REMOVE_PRODUCT_TO_CART = gql`
     mutation DeleteProduct($input: DeleteProductInput) {
       deleteProduct(input: $input)
     }
-`;
+  `;
 
-
-  const [updateQuantity] = useMutation(ADD_QUANTITY)
-  const [removeInCart] = useMutation(REMOVE_PRODUCT_TO_CART)
+  const [updateQuantity] = useMutation(ADD_QUANTITY);
+  const [removeInCart] = useMutation(REMOVE_PRODUCT_TO_CART);
 
   const postToCartWithProduct = (product: Product) => {
-    // const newProduct = {
-    //   productId: product.id.toString(),
-    //   quantity: product.quantity,
-    //   description: product.description,
-    //   price: product.price,
-    // }
+    const newProduct = {
+      productId: product.id.toString(),
+      quantity: product.quantity,
+      description: product.description,
+      price: product.price,
+    }
 
-    updateQuantity({ variables: { input: { userId: userId.toString(), productId: product.id.toString(), quantity: 1 } } }).then(({ data }) => {
-      if (data) setProductForCart(data.updateQuantity.products);
-    }).catch((error) => {
-      console.error(error);
-    });;
+    updateQuantity({
+      variables: {
+        input: {
+          userId: userId.toString(),
+          productId: product.id.toString(),
+          quantity: 1,
+        },
+      },
+    })
+      .then(({ data }) => {
+        if (data) setProductForCart(data.updateQuantity.products);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   const decrementQuantityInServer = (id: number) => {
-    updateQuantity({ variables: { input: { userId: userId.toString(), productId: id.toString(), quantity: -1 } } }).then(({ data }) => {
-      if (data) setProductForCart(data.updateQuantity.products);
-    }).catch((error) => {
-      console.error(error);
-    });;
-  }
-  const removeProductInCart = (id: number) => {
-    removeInCart({ variables: { input: { userId: userId.toString(), productId: id.toString() } } }).then(({ data }) => {
-      if (data) console.log('cool');
-      //// setProductForCart(data.cart.products);
-    }).catch((error) => {
-      console.error(error);
+    updateQuantity({
+      variables: {
+        input: {
+          userId: userId.toString(),
+          productId: id.toString(),
+          quantity: -1,
+        },
+      },
     })
+      .then(({ data }) => {
+        if (data) setProductForCart(data.updateQuantity.products);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
+  const removeProductInCart = (id: number) => {
+    removeInCart({
+      variables: {
+        input: { userId: userId.toString(), productId: id.toString() },
+      },
+    })
+      .then(({ data }) => {
+        if (data) console.log("cool");
+        //// setProductForCart(data.cart.products);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  // useEffect(()=>{
+  //   if(flag) dispatch(setCart(p))
+  // },[flag])
 
   useEffect(() => {
     // if (flag) getProductIfUserIsLoggedIn()
+    if(flag){
+      // setProductForCart(p)
+    }
     if (!flag) setProductForCart(productFromRtk);
   }, [flag, productFromRtk]);
 
@@ -208,32 +198,60 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
   }, [productsCartFromData, productForCart]);
 
   const incrementQuantity = (product: Product) => {
-    if (flag) postToCartWithProduct(product)
-    else dispatch(increment(product.id))
-
+    if (flag) {
+      postToCartWithProduct(product); refetch()}
+    else dispatch(increment(product.id));
+     
   };
   const decrementQuantity = (product: Product) => {
-    if (flag) decrementQuantityInServer(product.id)
-    else dispatch(decrement(product.id));
-
+    if (flag){
+       decrementQuantityInServer(product.id); refetch()}
+    else
+     dispatch(decrement(product.id));
+    //  refetch()
   };
   const removeProductFromCart = (product: Product) => {
-    if (flag) removeProductInCart(product.id)
-    else dispatch(removeProduct(product.id));
+    if (flag){
+       removeProductInCart(product.id); refetch()}
+    else 
+    dispatch(removeProduct(product.id));
   };
 
   return (
     <>
       {productsCartFromData.length ? (
         <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 700, minHeight: 100 }} aria-label="customized table">
+          <Table
+            sx={{ minWidth: 700, minHeight: 100 }}
+            aria-label="customized table"
+          >
             <TableHead>
               <TableRow>
-                <StyledTableCell style={{ backgroundColor: 'rgb(35,47,62)' }}>ITEMS</StyledTableCell>
-                <StyledTableCell align="center" style={{ backgroundColor: 'rgb(35,47,62)' }}>QUANTITY</StyledTableCell>
-                <StyledTableCell align="center" style={{ backgroundColor: 'rgb(35,47,62)' }}>AVAILABILITY</StyledTableCell>
-                <StyledTableCell align="right" style={{ backgroundColor: 'rgb(35,47,62)' }}>TOTAL PRICE</StyledTableCell>
-                <StyledTableCell align="right" style={{ backgroundColor: 'rgb(35,47,62)' }}>
+                <StyledTableCell style={{ backgroundColor: "rgb(35,47,62)" }}>
+                  ITEMS
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  style={{ backgroundColor: "rgb(35,47,62)" }}
+                >
+                  QUANTITY
+                </StyledTableCell>
+                <StyledTableCell
+                  align="center"
+                  style={{ backgroundColor: "rgb(35,47,62)" }}
+                >
+                  AVAILABILITY
+                </StyledTableCell>
+                <StyledTableCell
+                  align="right"
+                  style={{ backgroundColor: "rgb(35,47,62)" }}
+                >
+                  TOTAL PRICE
+                </StyledTableCell>
+                <StyledTableCell
+                  align="right"
+                  style={{ backgroundColor: "rgb(35,47,62)" }}
+                >
                   ADDITIONAL ACTIONS
                 </StyledTableCell>
               </TableRow>
@@ -270,13 +288,22 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
                       </StyledTableCell>
                     </StyledTableCell>
                     <StyledTableCell align="right">
-                      <IconButton sx={buttonAddToCart} onClick={() => removeProductFromCart(product)}>
+                      <IconButton
+                        sx={buttonAddToCart}
+                        onClick={() => removeProductFromCart(product)}
+                      >
                         <DeleteTwoToneIcon />
                       </IconButton>
-                      <IconButton sx={buttonAddToCart} onClick={() => incrementQuantity(product)}>
+                      <IconButton
+                        sx={buttonAddToCart}
+                        onClick={() => incrementQuantity(product)}
+                      >
                         <AddIcon />
                       </IconButton>
-                      <IconButton sx={buttonAddToCart} onClick={() => decrementQuantity(product)}>
+                      <IconButton
+                        sx={buttonAddToCart}
+                        onClick={() => decrementQuantity(product)}
+                      >
                         <RemoveIcon />
                       </IconButton>
                     </StyledTableCell>
@@ -308,7 +335,7 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
               sx={styleButton}
               variant="contained"
               onClick={() => {
-                navigate("/store");
+                navigate("/");
                 setOpenCart(false);
               }}
             >
