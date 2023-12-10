@@ -1,11 +1,9 @@
 import * as React from "react";
-import { styled, alpha } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import InputBase from "@mui/material/InputBase";
 import Badge from "@mui/material/Badge";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
@@ -25,49 +23,10 @@ import EditDetails from "./EditDiatels";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import SearchResults from "./SearchResults";
-import SearchResult from "./SearchResult";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
-
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
-    },
-  },
-}));
+import { Autocomplete, TextField } from "@mui/material";
+import { gql, useQuery } from "@apollo/client";
+import { Product } from "../interfaces/product";
 
 export interface Result {
   label: string;
@@ -79,8 +38,7 @@ export default function PrimarySearchAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     useState<null | HTMLElement>(null);
-  const [searchResults, setSearchResults] = useState<Result[] | null>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Result[]>([]);
   const [numOfItemsInCart, setNumOfItemsInCart] = useState<number>(
     useAppSelector((state) => state.cart.products.length)
   );
@@ -124,7 +82,6 @@ export default function PrimarySearchAppBar() {
   const logOut = () => {
     if (flagUser) {
       dispatch(resetUserName());
-      // localStorage.removeItem("cart");
     }
     handleMenuClose();
   };
@@ -248,30 +205,29 @@ export default function PrimarySearchAppBar() {
     </Menu>
   );
 
-  const handleSearch = async (searchQuery: string) => {
-    setSearchTerm(searchQuery);
-    console.log("Sending search request for:", searchQuery);
-    try {
-      const response = await axios.get(
-        `https://store-back-3.onrender.com/products`
-      );
-      console.log("Response from the server:", response);
-
-      if (!Array.isArray(response.data)) {
-        throw new Error("Response is not an array");
+  const PRODUCTS = gql`
+    query GetAllProducts {
+      getAllProducts {
+        id
+        title
       }
-
-      console.log("Processing response...");
-      const searchItems = response.data.map((product) => ({
-        label: product.title,
-        id: product.id,
-      }));
-      console.log("Processed search items:", searchItems);
-
-      setSearchResults(searchItems);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
     }
+  `;
+
+  const { data: productsData } = useQuery(PRODUCTS);
+
+  const handleSearch = async (searchQuery: string) => {
+    console.log("Sending search request for:", searchQuery);
+
+    const searchItems = productsData
+      ? productsData.getAllProducts.map((product: Product) => ({
+          label: product.title,
+          id: product.id,
+        }))
+      : [];
+    console.log("Processed search items:", searchItems);
+
+    setSearchResults(searchItems);
   };
 
   return (
@@ -293,27 +249,54 @@ export default function PrimarySearchAppBar() {
               QuadBros Market
             </Typography>
           </div>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ "aria-label": "search" }}
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              sx={{
-                fontFamily: "Fira Sans",
-              }}
-            />
-            {searchResults && searchResults.length > 0 && (
-              <SearchResults>
-                {searchResults.map((result) => (
-                  <SearchResult key={result.id} result={result} />
-                ))}
-              </SearchResults>
-            )}
-          </Search>
+          <Autocomplete
+            freeSolo
+            options={searchResults}
+            getOptionLabel={(option) =>
+              typeof option === "string" ? option : option.label
+            }
+            onChange={(event, value) => {
+              console.log(event);
+              if (typeof value !== "string" && value?.id) {
+                navigate(`/product/${value.id}`);
+              }
+            }}
+            onInputChange={(event, newInputValue) => {
+              console.log(event);
+              if (newInputValue.length > 2) {
+                handleSearch(newInputValue);
+              }
+            }}
+            renderInput={(params) => {
+              return (
+                <TextField
+                  {...params}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    type: "search",
+                    startAdornment: (
+                      <SearchIcon sx={{ color: "black", marginLeft: "10px" }} />
+                    ),
+                  }}
+                  sx={{
+                    width: 300,
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: "25px",
+                    marginLeft: "2rem",
+                    color: "#333",
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+                  }}
+                />
+              );
+            }}
+          />
 
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
