@@ -1,6 +1,7 @@
 import { BarChart } from "@mui/x-charts/BarChart";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { Theme, useMediaQuery } from "@mui/material";
 import { UserRegister } from "../../interfaces/users";
 
 const baseUrl =
@@ -11,8 +12,11 @@ const initialData = [
 ];
 
 export default function StackBars() {
+  const isLargeScreen = useMediaQuery((theme: Theme) => theme.breakpoints.up("lg"));
+  const isMediumScreen = useMediaQuery((theme: Theme) => theme.breakpoints.between("md", "lg"));
+  const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
-  const [data, setData] = useState(initialData)
+  const [data, setData] = useState(initialData);
 
   const getHourOfDay = (userDate: Date): number => {
     const date = new Date(userDate);
@@ -29,18 +33,15 @@ export default function StackBars() {
 
   const extractTimeFromUsers = (users: UserRegister[]) => {
     const usersInHours: number[] = data;
-    console.log(usersInHours);
 
     users.map((user) => {
       let userHourRegister = 0;
       if (user.signup_time) {
         userHourRegister = getHourOfDay(user.signup_time);
-        console.log(userHourRegister);
       }
       usersInHours[userHourRegister] += 1;
-      console.log(usersInHours);
     });
-    return usersInHours
+    return usersInHours;
   };
 
   useEffect(() => {
@@ -49,12 +50,13 @@ export default function StackBars() {
         const res = await axios.get(`${baseUrl}/users`);
         const { data } = res;
         const filterData = extractTimeFromUsers(data);
-        setData(filterData)
+        setData(filterData);
       } catch (error) {
         console.log(error);
       }
     })();
   }, []);
+
   return (
     <BarChart
       series={[
@@ -67,7 +69,9 @@ export default function StackBars() {
           data: data,
         },
       ]}
-      width={600}
+      width={
+        isLargeScreen ? 500 : (isMediumScreen ? 400 : (isSmallScreen ? undefined : 300))
+      }
       height={350}
     />
   );

@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import SearchResults from "./SearchResults";
 import SearchResult from "./SearchResult";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -76,10 +77,13 @@ export interface Result {
 export default function PrimarySearchAppBar() {
   const [openCart, setOpenCart] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
+  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
+    useState<null | HTMLElement>(null);
   const [searchResults, setSearchResults] = useState<Result[] | null>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [numOfItemsInCart, setNumOfItemsInCart] = useState<number>(useAppSelector((state) => state.cart.products.length));
+  const [searchTerm, setSearchTerm] = useState("");
+  const [numOfItemsInCart, setNumOfItemsInCart] = useState<number>(
+    useAppSelector((state) => state.cart.products.length)
+  );
   const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -223,6 +227,12 @@ export default function PrimarySearchAppBar() {
         </IconButton>
         <p>Home</p>
       </MenuItem>
+      <MenuItem onClick={() => navigate("/charts")}>
+        <IconButton size="large" aria-label="show 4 new mails" color="inherit">
+          <QueryStatsIcon />
+        </IconButton>
+        <p>Charts</p>
+      </MenuItem>
       <MenuItem onClick={handleProfileMenuOpen}>
         <IconButton
           size="large"
@@ -238,9 +248,8 @@ export default function PrimarySearchAppBar() {
     </Menu>
   );
 
-
   const handleSearch = async (searchQuery: string) => {
-    setSearchTerm(searchQuery)
+    setSearchTerm(searchQuery);
     console.log("Sending search request for:", searchQuery);
     try {
       const response = await axios.get(
@@ -264,10 +273,6 @@ export default function PrimarySearchAppBar() {
       console.error("Error fetching search results:", error);
     }
   };
-
-  // const handleResultSelect = (result: Result) => {
-  //   console.log(result);
-  // };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -304,11 +309,7 @@ export default function PrimarySearchAppBar() {
             {searchResults && searchResults.length > 0 && (
               <SearchResults>
                 {searchResults.map((result) => (
-                  <SearchResult
-                    key={result.id}
-                    result={result}
-                    // onClick={() => handleResultSelect(result)}
-                  />
+                  <SearchResult key={result.id} result={result} />
                 ))}
               </SearchResults>
             )}
@@ -334,6 +335,15 @@ export default function PrimarySearchAppBar() {
                 <LockOutlinedIcon />
               </IconButton>
             )}
+            <MenuItem onClick={() => navigate("/charts")}>
+              <IconButton
+                size="large"
+                aria-label="show 4 new mails"
+                color="inherit"
+              >
+                <QueryStatsIcon />
+              </IconButton>
+            </MenuItem>
             <IconButton
               size="large"
               color="inherit"
