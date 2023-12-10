@@ -17,6 +17,7 @@ import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { addProductToCart } from "../rtk/cartSlice";
 import PlusOneIcon from "@mui/icons-material/PlusOne";
+import { gql, useMutation } from "@apollo/client";
 
 const ProductDetails: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
@@ -28,9 +29,24 @@ const ProductDetails: React.FC = () => {
   const product = useAppSelector((state) => state.products.products).find(
     (product) => product.id === Number(id)
   );
+  const flag = useAppSelector((state) => state.userName.flag)
+  const user_id = useAppSelector((state) => state.userName.userId)
 
-  console.log(product);
-  
+  const ADD_TO_CART = gql`
+      mutation AddToCart($input: AddToCartInput) {
+        addToCart(input: $input) {
+          userId
+          products {
+            productId
+            quantity
+            description
+            price
+          }
+        }
+      }
+  `;
+
+  const [addToCartInDB] = useMutation(ADD_TO_CART)
 
   const { title, image, price, attributes, description } = product
     ? product
@@ -41,14 +57,30 @@ const ProductDetails: React.FC = () => {
   };
 
   const addToCart = (id: number, price: number, description: string) => {
-    dispatch(
-      addProductToCart({
-        name: id,
-        quantity: 1,
-        price: price,
-        description: description,
+    if (flag) {
+      addToCartInDB({
+        variables: {
+          input: {
+            userId: user_id.toString(), products: [{
+              productId: id.toString(),
+              price: price,
+              quantity: 1,
+              description: description
+            }]
+          }
+        }
       })
-    );
+    }
+    else {
+      dispatch(
+        addProductToCart({
+          name: id,
+          quantity: 1,
+          price: price,
+          description: description,
+        })
+      );
+    }
   };
   const productInCart = useAppSelector((state) => state.cart.products);
 
@@ -81,7 +113,6 @@ const ProductDetails: React.FC = () => {
               </Grid>
               <Grid item>
                 <IconButton
-                
                   sx={{
                     backgroundColor: "red",
                     color: "white",
