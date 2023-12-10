@@ -29,6 +29,9 @@ const ProductDetails: React.FC = () => {
     (product) => product.id === Number(id)
   );
 
+  console.log(product);
+  
+
   const { title, image, price, attributes, description } = product
     ? product
     : { title: "", image: "", price: 0, attributes: {}, description: "" };

@@ -59,6 +59,7 @@ const Home = () => {
         description
         clickCount
         category
+        image
         attributes {
           key
           value
