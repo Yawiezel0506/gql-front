@@ -12,7 +12,7 @@ import {
   increment,
   removeProduct,
 } from "../rtk/cartSlice";
-import { Product } from "../interfaces/product";
+import { Product, ProductInServerCart } from "../interfaces/product";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteTwoToneIcon from "@mui/icons-material/DeleteTwoTone";
@@ -40,8 +40,8 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
   );
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
   const navigate = useNavigate();
-
   const dispatch = useAppDispatch();
+
   const dataProduct = useAppSelector((state) => state.products.products);
   const setOpenCart = props;
 
@@ -52,67 +52,42 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     (state) => state.cart.products
   );
 
-  if (flag) {
-    const GET_PRODUCTS_FROM_CART = gql`
-      query Cart($cartId: String!) {
-        cart(id: $cartId) {
-          products {
-            name: productId
-            quantity
-            price
-            description
-          }
+  const GET_PRODUCTS_FROM_CART = gql`
+    query Cart($cartId: String!) {
+      cart(id: $cartId) {
+        products {
+          productId
+          quantity
+          price
+          description
         }
-      }
-    `;
+      } 
+    }
+  `;
 
-    const { error: errorCart, data: dataCart } = useQuery(
-      GET_PRODUCTS_FROM_CART,
-      {
-        variables: { cartId: userId.toString() },
-      }
-    );
+  const { error: errorCart, data: dataCart, refetch } = useQuery(GET_PRODUCTS_FROM_CART, {
+    variables: { cartId: userId.toString() },
+  });
 
-    useEffect(() => {
-      if (dataCart) setProductForCart(dataCart.cart.products);
-      console.log("dataCart", dataCart);
-      if (errorCart) console.error(errorCart);
-    }, [dataCart, errorCart]);
+
+  const conversion = (state: ProductInServerCart[]) => {
+    const temp: CartProduct[] = state.map((product: ProductInServerCart) => {
+      return {
+        name: product.productId,
+        quantity: product.quantity,
+        price: product.price,
+        description: product.description
+      }
+    })
+    return temp
   }
-  // function useCartProducts(userId: string) {
-  //   const GET_PRODUCTS_FROM_CART = gql`
-  //     query Cart($cartId: String!) {
-  //       cart(id: $cartId) {
-  //         products {
-  //           name: productId
-  //           quantity
-  //           price
-  //           description
-  //         }
-  //       }
-  //     }
-  //   `;
 
-  //   const { error: errorCart, data: dataCart } = useQuery(GET_PRODUCTS_FROM_CART, {
-  //     variables: { cartId: userId.toString() },
-  //   });
+  useEffect(() => {
+    if (dataCart) setProductForCart(conversion(dataCart.cart.products))
+    if (errorCart) console.error(errorCart);
+  }, [dataCart, errorCart])
 
-  //   const [productsForCart, setProductForCart] = useState([]);
-
-  //   useEffect(() => {
-  //     if (dataCart) {
-  //       setProductForCart(dataCart.cart.products);
-  //       console.log('dataCart', dataCart);
-  //     }
-  //     if (errorCart) console.error(errorCart);
-  //   }, [dataCart, errorCart]);
-
-  //   return productsForCart;
-  // }
-
-  // useCartProducts(userId);
-
-  const ADD_QUANTITY = gql`
+  const UPDATE_QUANTITY = gql`
     mutation UpdateQuantity($input: UpdateQuantityInput) {
       updateQuantity(input: $input) {
         products {
@@ -131,17 +106,10 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     }
   `;
 
-  const [updateQuantity] = useMutation(ADD_QUANTITY);
+  const [updateQuantity] = useMutation(UPDATE_QUANTITY);
   const [removeInCart] = useMutation(REMOVE_PRODUCT_TO_CART);
 
-  const postToCartWithProduct = (product: Product) => {
-    // const newProduct = {
-    //   productId: product.id.toString(),
-    //   quantity: product.quantity,
-    //   description: product.description,
-    //   price: product.price,
-    // }
-
+  const incrementQuantityInServer = (product: Product) => {
     updateQuantity({
       variables: {
         input: {
@@ -152,7 +120,7 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
       },
     })
       .then(({ data }) => {
-        if (data) setProductForCart(data.updateQuantity.products);
+        if (data) setProductForCart(conversion(dataCart.cart.products)); refetch()
       })
       .catch((error) => {
         console.error(error);
@@ -170,7 +138,8 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
       },
     })
       .then(({ data }) => {
-        if (data) setProductForCart(data.updateQuantity.products);
+        if (data) setProductForCart(conversion(dataCart.cart.products));
+        refetch()
       })
       .catch((error) => {
         console.error(error);
@@ -183,16 +152,16 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
       },
     })
       .then(({ data }) => {
-        if (data) console.log("cool");
-        //// setProductForCart(data.cart.products);
+        if (data) refetch()
       })
       .catch((error) => {
         console.error(error);
       });
   };
 
+
   useEffect(() => {
-    // if (flag) getProductIfUserIsLoggedIn()
+    // if (flag) {}
     if (!flag) setProductForCart(productFromRtk);
   }, [flag, productFromRtk]);
 
@@ -205,7 +174,8 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
       if (products.length) {
         setProductsCartFromData(products);
       }
-    } else setProductsCartFromData([]);
+    }
+    else setProductsCartFromData([]);
   };
 
   useEffect(() => {
@@ -217,7 +187,7 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
     let total = 0;
     for (const product of productsCartFromData) {
       const quantity: CartProduct | undefined = productForCart.find(
-        (item) => item.name === product.id
+        (item) => item.name == product.id
       );
       if (quantity && quantity.quantity) {
         total += product.price * quantity.quantity;
@@ -227,17 +197,20 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
   }, [productsCartFromData, productForCart]);
 
   const incrementQuantity = (product: Product) => {
-    if (flag) postToCartWithProduct(product);
+    if (flag) incrementQuantityInServer(product);
     else dispatch(increment(product.id));
   };
+
   const decrementQuantity = (product: Product) => {
     if (flag) decrementQuantityInServer(product.id);
     else dispatch(decrement(product.id));
   };
+
   const removeProductFromCart = (product: Product) => {
     if (flag) removeProductInCart(product.id);
     else dispatch(removeProduct(product.id));
   };
+  refetch()
 
   return (
     <>
@@ -281,10 +254,11 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
             <TableBody>
               {productsCartFromData.map((product) => {
                 const quantity: CartProduct | undefined = productForCart.find(
-                  (item) => item.name === product.id
+                  (item) => item.name == product.id
                 );
                 return (
-                  <StyledTableRow key={product.id}>
+                  // <StyledTableRow key={product.id}>
+                  <StyledTableRow key={Math.floor(Math.random() * 10000)}>
                     <StyledTableCell component="th" scope="row">
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <CardMedia
@@ -301,7 +275,7 @@ const CartTable: React.FC<CartProps> = ({ props }) => {
                     <StyledTableCell align="center">
                       {quantity?.quantity}
                     </StyledTableCell>
-                    <StyledTableCell align="center">{}</StyledTableCell>
+                    <StyledTableCell align="center">{ }</StyledTableCell>
                     <StyledTableCell align="center">
                       <StyledTableCell align="center">
                         {quantity && quantity.quantity

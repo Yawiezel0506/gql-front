@@ -66,12 +66,26 @@ const LogIn = () => {
         username
         lastName
         password
-        # signup_time
+        _id
       }
     }
 `;
 
+  const ADD_TO_CART = gql`
+    mutation AddToCart($input: AddToCartInput) {
+      addToCart(input: $input) {
+        userId
+        products {
+          productId
+          quantity
+          description
+          price
+        }
+      }
+    }
+`;
 
+  const [addToCart] = useMutation(ADD_TO_CART)
   const [login] = useMutation(REGISTER_USER)
 
   const handleLogIn = () => {
@@ -87,38 +101,30 @@ const LogIn = () => {
           localStorage.setItem('password', password)
           setEmail("");
           setPassword("");
-          dispatch(setUserName(userName));
+          dispatch(setUserName(userName.logIn));
           dispatch(
-            setUserNameInCart(`${userName.firstName} ${userName.lastName}`)
+            setUserNameInCart(userName.logIn._id)
           );
           notify()
+          const lsCart = localStorage.getItem('cart')
+          const cart = lsCart ? JSON.parse(lsCart) : []
+          const newCart = cart.map((item: any) => {
+            return {
+              productId: item.name.toString(),
+              price: item.price,
+              quantity: item.quantity,
+              description: item.description
+            }
+          })
+          addToCart({ variables: { input: { userId: userName.logIn._id.toString(), products: newCart } } }).then(({data}) =>{
+            if(data) localStorage.removeItem('cart')
+          } )
         }
       }).catch((error) => {
         console.error(error);
         dispatch(setOpenSignUp(true));
       })
-      //     const response = await axios.post(
-      //       `${baseURL}/users/login`,
-      //       userData
-      //     );
-      //     if (response.data) {
-      //       const userName = response.data.user;
-      //       setEmail("");
-      //       setPassword("");
-      //       dispatch(setUserName(userName));
-      //       dispatch(
-      //         setUserNameInCart(`${userName.firstName} ${userName.lastName}`)
-      //       );
-      //       localStorage.setItem('email', email)
-      //       localStorage.setItem('password', password)
-      //       notify()
-      //     }
-      //   } catch (error) {
-      //     console.error("Error during registration:", error);
-      //     dispatch(setOpenSignUp(true));
-      //   }
-      //   dispatch(setOpenLogIn(false));
-      // }
+
       if (!validatePassword(password)) {
         setOpenAlertPassword(true);
       }
@@ -135,9 +141,6 @@ const LogIn = () => {
 
   return (
     <React.Fragment>
-      {/* <Button variant="outlined" onClick={handleClickOpen}>
-        Log IN
-      </Button> */}
       <IconButton
         size="large"
         aria-label="account of current user"
