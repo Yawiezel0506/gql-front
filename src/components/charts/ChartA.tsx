@@ -23,13 +23,14 @@ export default function StackBars() {
   const [data, setData] = useState(initialData);
 
   const USERS = gql`
-  query GetAllUsers {
-    getAllUsers {
-      _id
+    query GetAllUsers {
+      getAllUsers {
+        _id
+      }
     }
-  }`;
+  `;
 
-  const {data:usersData} = useQuery(USERS)
+  const { data: usersData } = useQuery(USERS);
 
   const getHourOfDay = (userDate: Date): number => {
     const date = new Date(userDate);
@@ -61,13 +62,15 @@ export default function StackBars() {
     (() => {
       try {
         usersData && console.log(usersData.getAllUsers);
-        const filterData = usersData ? extractTimeFromUsers(usersData.getAllUsers): data;
+        const filterData = usersData
+          ? extractTimeFromUsers(usersData.getAllUsers)
+          : data;
         setData(filterData);
       } catch (error) {
         console.log(error);
       }
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usersData]);
 
   return (
@@ -77,9 +80,11 @@ export default function StackBars() {
           data: data,
           stack: "A",
           label: "User registration/hour",
+          type: "bar",
         },
         {
           data: data,
+          type: "bar",
         },
       ]}
       width={
@@ -92,6 +97,7 @@ export default function StackBars() {
           : 300
       }
       height={350}
+      axisHighlight={{x:"line", y:"line"}}
     />
   );
 }

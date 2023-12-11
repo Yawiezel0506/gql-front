@@ -1,33 +1,43 @@
-import { useAppDispatch } from "../rtk/hooks";
-import axios from "axios";
-import { setUserName } from "../rtk/userNameSlice";
-import { setUserNameInCart } from "../rtk/cartSlice";
+// Import necessary dependencies and hooks
+import  { useEffect } from 'react';
+import { useAppDispatch } from '../rtk/hooks';
+import axios from 'axios';
+import { setUserName } from '../rtk/userNameSlice';
+import { setUserNameInCart } from '../rtk/cartSlice';
 
-const AutomaticLogIn = async () => {
+const AutomaticLogIn = () => {
   const dispatch = useAppDispatch();
   const baseURL = import.meta.env.VITE_SERVER_API_OLD;
 
-  const email = localStorage.getItem("email");
-  const password = localStorage.getItem("password");
+  useEffect(() => {
+    const email = localStorage.getItem('email');
+    const password = localStorage.getItem('password');
 
-  if (email && password) {
-    try {
-      const userData = {
-        email,
-        password,
-      };
-      const response = await axios.post(`${baseURL}/users/login`, userData);
-      if (response.data) {
-        const userName = response.data.user;
-        dispatch(setUserName(userName));
-        dispatch(
-          setUserNameInCart(`${userName.firstName} ${userName.lastName}`)
-        );
+    const fetchData = async () => {
+      if (email && password) {
+        try {
+          const userData = {
+            email,
+            password,
+          };
+          const response = await axios.post(`${baseURL}/users/login`, userData);
+          if (response.data) {
+            const userName = response.data.user;
+            dispatch(setUserName(userName));
+            dispatch(setUserNameInCart(`${userName.firstName} ${userName.lastName}`));
+          }
+        } catch (error) {
+          console.error('Error during login:', error);
+        }
       }
-    } catch (error) {
-      console.error("Error during registration:", error);
-    }
-  }
+    };
+
+    fetchData(); 
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures useEffect runs only once on component mount
+
+  return null; // Since it doesn't render anything, you can return null or an empty component
 };
 
 export default AutomaticLogIn;
