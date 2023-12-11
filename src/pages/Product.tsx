@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Typography,
   Grid,
@@ -15,9 +15,10 @@ import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../rtk/hooks";
-import { addProductToCart } from "../rtk/cartSlice";
+import { addProductToCart, increment } from "../rtk/cartSlice";
 import PlusOneIcon from "@mui/icons-material/PlusOne";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import { ProductInServerCart } from "../interfaces/product";
 
 const ProductDetails: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
@@ -33,18 +34,55 @@ const ProductDetails: React.FC = () => {
   const user_id = useAppSelector((state) => state.userName.userId)
 
   const ADD_TO_CART = gql`
-      mutation AddToCart($input: AddToCartInput) {
-        addToCart(input: $input) {
-          userId
-          products {
-            productId
-            quantity
-            description
-            price
-          }
+    mutation AddToCart($input: AddToCartInput) {
+      addToCart(input: $input) {
+        userId
+        products {
+          productId
+          quantity
+          description
+          price
         }
       }
+    }
   `;
+
+  const GET_PRODUCTS_FROM_CART = gql`
+    query Cart($cartId: String!) {
+      cart(id: $cartId) {
+        products {
+          productId
+          quantity
+          price
+          description
+        }
+      } 
+    }
+  `;
+
+  const UPDATE_QUANTITY = gql`
+    mutation UpdateQuantity($input: UpdateQuantityInput) {
+      updateQuantity(input: $input) {
+        products {
+          quantity
+          productId
+          description
+          price
+        }
+      }
+    }
+  `;
+
+  const { error: errorCart, data: dataCart, refetch } = useQuery(GET_PRODUCTS_FROM_CART, {
+    variables: { cartId: user_id.toString() },
+  });
+
+  useEffect(() => {
+    if (dataCart) ////setProductForCart(conversion(dataCart.cart.products))
+      if (errorCart) console.error(errorCart);
+  }, [dataCart, errorCart])
+
+  const [updateQuantity] = useMutation(UPDATE_QUANTITY)
 
   const [addToCartInDB] = useMutation(ADD_TO_CART)
 
@@ -69,9 +107,14 @@ const ProductDetails: React.FC = () => {
             }]
           }
         }
+      }).then(({ data }) => {
+        if (data) ///setProductForCart(conversion(dataCart.cart.products));
+          refetch()
       })
-    }
-    else {
+        .catch((error) => {
+          console.error(error);
+        });
+    } else {
       dispatch(
         addProductToCart({
           name: id,
@@ -82,11 +125,38 @@ const ProductDetails: React.FC = () => {
       );
     }
   };
+
+  const incrementQuantity = (id: number) => {
+    if (flag) {
+      updateQuantity({
+        variables: {
+          input: {
+            userId: user_id.toString(),
+            productId: id.toString(),
+            quantity: 1,
+          },
+        },
+      })
+        .then(({ data }) => {
+          if (data) ///setProductForCart(conversion(dataCart.cart.products));
+            refetch()
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    else dispatch(increment(id));
+  };
+
   const productInCart = useAppSelector((state) => state.cart.products);
 
-  const addedToCart =
-    Array.isArray(productInCart) &&
-    productInCart.some((item) => item.name === Number(id));
+  // const addedToCart =
+  //   Array.isArray(productInCart) &&
+  //   productInCart.some((item) => item.name === Number(id));
+
+  const itemInCart = Array.isArray(productInCart) && productInCart.find((item) => item.name === Number(id));
+  const itemInServer = Array.isArray(dataCart?.cart.products) && dataCart?.cart.products.find((item: ProductInServerCart) => item.productId == Number(id));
+  const addedToCart = itemInCart || itemInServer ? true : false;
 
   return (
     <Card style={{ backgroundColor: "cornsilk" }}>
@@ -117,10 +187,10 @@ const ProductDetails: React.FC = () => {
                     backgroundColor: "red",
                     color: "white",
                   }}
-                  onClick={() => addToCart(Number(id), price, description)}
+
                 >
-                  {!addedToCart && <AddShoppingCartIcon />}
-                  {addedToCart && <PlusOneIcon />}
+                  {!addedToCart && <AddShoppingCartIcon onClick={() => addToCart(Number(id), price, description)} />}
+                  {addedToCart && <PlusOneIcon onClick={() => incrementQuantity(Number(id))} />}
                 </IconButton>
               </Grid>
             </Grid>

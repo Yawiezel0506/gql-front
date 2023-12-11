@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { setOpen as setOpenSignUp } from "../rtk/flagSignUpSlice";
 import { setOpen as setOpenLogIn } from "../rtk/flagLogInSlice";
 import { setUserName } from "../rtk/userNameSlice";
-import { setUserNameInCart } from "../rtk/cartSlice";
+import { render, setUserNameInCart } from "../rtk/cartSlice";
 import { Alert, Collapse, IconButton, InputAdornment } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -118,6 +118,7 @@ const LogIn = () => {
           })
           addToCart({ variables: { input: { userId: userName.logIn._id.toString(), products: newCart } } }).then(({data}) =>{
             if(data) localStorage.removeItem('cart')
+            render()
           } )
         }
       }).catch((error) => {
