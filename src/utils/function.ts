@@ -53,7 +53,7 @@ export function getUniqueAttributes(
   return groupedAttributes;
 }
 
-const baseURL = import.meta.env.VITE_SERVER_API_OLD;
+const baseURL = import.meta.env.VITE_SERVER_API;
 
 export function connectToData(
   category: string | undefined,
@@ -79,8 +79,21 @@ export function connectToData(
 export function sendOrderDetails(order: SendOrderDetails) {
   const fetchOrder = async () => {
     try {
-      const response = await axios.post(`${baseURL}/orders`, order);
+      const response = await axios.post(`${baseURL}/graphql/orders`, order);
       console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  fetchOrder();
+}
+
+export function getAllOrders(id: string) {
+  const fetchOrder = async () => {
+    try {
+      const response = await axios.get(`${baseURL}/orders/${id}`);
+      console.log(response);
+      return response.data;
     } catch (error) {
       console.error(error);
     }

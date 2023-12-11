@@ -28,7 +28,7 @@ import { useAppDispatch, useAppSelector } from "../rtk/hooks";
 import { getUniqueAttributes } from "../utils/function";
 import AddIcon from "@mui/icons-material/Add";
 import ProductSkeleton from "../components/ProductSkeleton";
-import { Product, Prices } from "../interfaces/product";
+import { Product, Prices, ProductInServerCart } from "../interfaces/product";
 import { connectToData } from "../utils/function";
 import {
   buttonAddToCart,
@@ -39,7 +39,7 @@ import {
   typographyH3PriceStyle,
   typographyH3Style,
 } from "../style/products";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 
 type State = Record<string, boolean>;
 type Action = { type: "toggle"; name: string | number };
@@ -89,7 +89,44 @@ const Products = () => {
       }
   `;
 
+  const GET_PRODUCTS_FROM_CART = gql`
+  query Cart($cartId: String!) {
+    cart(id: $cartId) {
+      products {
+        productId
+        quantity
+        price
+        description
+      }
+    } 
+  }
+`;
+
+  const { error: errorCart, data: dataCart, refetch } = useQuery(GET_PRODUCTS_FROM_CART, {
+    variables: { cartId: user_id.toString() },
+  });
+
+  useEffect(() => {
+    if (dataCart) ////setProductForCart(conversion(dataCart.cart.products))
+      if (errorCart) console.error(errorCart);
+  }, [dataCart, errorCart])
+
+
+  const UPDATE_QUANTITY = gql`
+    mutation UpdateQuantity($input: UpdateQuantityInput) {
+      updateQuantity(input: $input) {
+        products {
+          quantity
+          productId
+          description
+          price
+        }
+      }
+    }
+  `;
+
   const [addToCartInDB] = useMutation(ADD_TO_CART)
+  const [updateQuantity] = useMutation(UPDATE_QUANTITY)
 
   useEffect(() => {
     connectToData(category, setLoading, setProducts);
@@ -148,6 +185,13 @@ const Products = () => {
           }
         }
       })
+        .then(({ data }) => {
+          if (data) ///setProductForCart(conversion(dataCart.cart.products));
+            refetch()
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     } else {
       dispatch(
         addProductToCart({
@@ -159,11 +203,49 @@ const Products = () => {
       );
     };
   }
+
   const incrementQuantity = (product: Product) => {
-    dispatch(increment(product.id));
+    if (flag) {
+      updateQuantity({
+        variables: {
+          input: {
+            userId: user_id.toString(),
+            productId: product.id.toString(),
+            quantity: 1,
+          },
+        },
+      })
+        .then(({ data }) => {
+          if (data) ///setProductForCart(conversion(dataCart.cart.products));
+            refetch()
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    else dispatch(increment(product.id));
   };
+
   const decrementQuantity = (product: Product) => {
-    dispatch(decrement(product.id));
+    if (flag) {
+      updateQuantity({
+        variables: {
+          input: {
+            userId: user_id.toString(),
+            productId: product.id.toString(),
+            quantity: -1,
+          },
+        },
+      })
+        .then(({ data }) => {
+          if (data) ///setProductForCart(conversion(dataCart.cart.products));
+            refetch()
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+    else dispatch(decrement(product.id));
   };
 
   const productInCart = useAppSelector((state: { cart: { products: unknown }; }) => state.cart.products);
@@ -181,7 +263,7 @@ const Products = () => {
       label: Math.ceil((minPrice + maxPrice) / 2),
     },
   ];
-
+  refetch()
   return (
     <Stack spacing={2} direction="row">
       <Box width={"15em"}>
@@ -236,7 +318,8 @@ const Products = () => {
         ) : (
           filteredProducts?.map((product) => {
             const itemInCart = Array.isArray(productInCart) && productInCart.find((item) => item.name === product.id);
-            const addedToCart = itemInCart ? true : false;
+            const itemInServer = Array.isArray(dataCart?.cart.products) && dataCart?.cart.products.find((item:ProductInServerCart) => item.productId == product.id);
+            const addedToCart = flag ? (itemInServer ? true : false) : (itemInCart ? true : false);
             return (
               <Grid key={product.id}>
                 <Card sx={cardStyle}>
