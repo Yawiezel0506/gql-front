@@ -318,7 +318,7 @@ const Products = () => {
         ) : (
           filteredProducts?.map((product) => {
             const itemInCart = Array.isArray(productInCart) && productInCart.find((item) => item.name === product.id);
-            const itemInServer = Array.isArray(dataCart?.cart.products) && dataCart?.cart.products.find((item:ProductInServerCart) => item.productId == product.id);
+            const itemInServer = Array.isArray(dataCart?.cart.products) && dataCart?.cart.products.find((item: ProductInServerCart) => item.productId == product.id);
             const addedToCart = flag ? (itemInServer ? true : false) : (itemInCart ? true : false);
             return (
               <Grid key={product.id}>
@@ -356,7 +356,7 @@ const Products = () => {
                         <IconButton sx={buttonAddToCart} onClick={() => incrementQuantity(product)}>
                           <AddIcon />
                         </IconButton>
-                        {itemInCart && <IconButton sx={quantityOnCard}>{itemInCart.quantity}</IconButton>}
+                        <IconButton sx={quantityOnCard}>{itemInCart ? itemInCart.quantity : itemInServer.quantity}</IconButton>
                         <IconButton sx={buttonAddToCart} onClick={() => decrementQuantity(product)}>
                           <RemoveIcon />
                         </IconButton>
