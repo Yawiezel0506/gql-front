@@ -250,6 +250,30 @@ export default function PrimarySearchAppBar() {
             </Typography>
           </div>
           <Autocomplete
+            ListboxProps={{
+              style: {
+                backgroundColor: '#f5f5f5',
+                borderRadius: '10px', 
+                marginTop: '10px',
+                padding: '10px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+              sx: {
+                '& ul': {
+                  padding: 0,
+                  margin: 0
+                },
+                '& li': {
+                  padding: '10px',
+                  borderBottom: '1px solid #ddd'  
+                },
+                '& li:last-child': {
+                  borderBottom: 'none'
+                }
+              }  
+            }}
             freeSolo
             options={searchResults}
             getOptionLabel={(option) =>
@@ -282,9 +306,11 @@ export default function PrimarySearchAppBar() {
                     ),
                   }}
                   sx={{
-                    width: 300,
+                    width: 260,
                     backgroundColor: "#f5f5f5",
-                    borderRadius: "25px",
+                    borderRadius: "10px",
+                    height: "2.8rem",
+                    background: "lightgrey",
                     marginLeft: "2rem",
                     color: "#333",
                     "& .MuiOutlinedInput-root": {
