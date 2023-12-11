@@ -53,7 +53,7 @@ export function getUniqueAttributes(
   return groupedAttributes;
 }
 
-const baseURL = import.meta.env.VITE_SERVER_API;
+const baseURL = import.meta.env.VITE_SERVER_API_OLD;
 
 export function connectToData(
   category: string | undefined,
